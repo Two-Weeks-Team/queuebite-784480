@@ -42,8 +42,18 @@ elif POSTGRES_URL.startswith("postgres://"):
 elif POSTGRES_URL.startswith("postgresql://") and "+psycopg" not in POSTGRES_URL:
     POSTGRES_URL = POSTGRES_URL.replace("postgresql://", "postgresql+psycopg://", 1)
 
+# asyncpg uses ?ssl=require but psycopg uses ?sslmode=require
+if "?ssl=" in POSTGRES_URL and "sslmode" not in POSTGRES_URL:
+    POSTGRES_URL = POSTGRES_URL.replace("?ssl=", "?sslmode=")
+if "&ssl=" in POSTGRES_URL and "sslmode" not in POSTGRES_URL:
+    POSTGRES_URL = POSTGRES_URL.replace("&ssl=", "&sslmode=")
+
 connect_args: dict = {}
-if "localhost" not in POSTGRES_URL and "sslmode" not in POSTGRES_URL:
+if (
+    "localhost" not in POSTGRES_URL
+    and "sslmode" not in POSTGRES_URL
+    and "ssl" not in POSTGRES_URL
+):
     connect_args["sslmode"] = "require"
 
 engine = create_engine(POSTGRES_URL, echo=False, connect_args=connect_args)
