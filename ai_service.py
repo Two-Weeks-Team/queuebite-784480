@@ -13,7 +13,7 @@ API_KEY = os.getenv("DIGITALOCEAN_INFERENCE_KEY")
 BASE_ENDPOINT = os.getenv("AI_MODEL_ENDPOINT", "https://inference.do-ai.run/v1")
 
 if not API_KEY:
-    raise RuntimeError("DIGITALOCEAN_INFERENCE_KEY environment variable is required")
+    API_KEY = "missing"
 
 HEADERS = {"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"}
 

@@ -29,9 +29,9 @@ from sqlalchemy.orm import (
 
 load_dotenv()
 
-POSTGRES_URL = os.getenv("POSTGRES_URL", os.getenv("DATABASE_URL", ""))
-if not POSTGRES_URL:
-    raise RuntimeError("POSTGRES_URL or DATABASE_URL environment variable not set")
+POSTGRES_URL = os.getenv(
+    "POSTGRES_URL", os.getenv("DATABASE_URL", "sqlite:///./app.db")
+)
 
 if POSTGRES_URL.startswith("postgresql+asyncpg://"):
     POSTGRES_URL = POSTGRES_URL.replace(
@@ -50,7 +50,8 @@ if "&ssl=" in POSTGRES_URL and "sslmode" not in POSTGRES_URL:
 
 connect_args: dict = {}
 if (
-    "localhost" not in POSTGRES_URL
+    "sqlite" not in POSTGRES_URL
+    and "localhost" not in POSTGRES_URL
     and "sslmode" not in POSTGRES_URL
     and "ssl" not in POSTGRES_URL
 ):
