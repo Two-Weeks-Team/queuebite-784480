@@ -24,6 +24,23 @@ app.include_router(api_router, prefix="/api/v1")
 @app.on_event("startup")
 def on_startup() -> None:
     Base.metadata.create_all(bind=engine)
+    # Seed demo restaurant so UI works out of the box
+    from models import SessionLocal, Restaurant
+    import uuid
+
+    db = SessionLocal()
+    try:
+        demo_id = uuid.UUID("00000000-0000-0000-0000-000000000001")
+        existing = db.query(Restaurant).filter(Restaurant.id == demo_id).first()
+        if not existing:
+            db.add(
+                Restaurant(id=demo_id, name="Demo Restaurant", address="123 Main St")
+            )
+            db.commit()
+    except Exception:
+        db.rollback()
+    finally:
+        db.close()
 
 
 @app.get("/health")
@@ -73,9 +90,15 @@ tailwind.config = {
       <span class="px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/25">DigitalOcean</span>
       <span class="px-3 py-1 rounded-full text-xs font-semibold bg-green-500/10 text-green-400 border border-green-500/25">Live</span>
     </div>
-    <div class="flex justify-center gap-3 mt-5 flex-wrap">
-      <a href="/docs" class="gradient-btn text-white text-sm font-semibold px-5 py-2 rounded-lg transition-all">API Docs</a>
-      <a href="/redoc" class="bg-[#262626] text-neutral-300 border border-neutral-700 text-sm font-semibold px-5 py-2 rounded-lg hover:bg-[#333] transition-all">ReDoc</a>
+  </div>
+
+  <!-- How It Works -->
+  <div class="bg-[#171717] border border-[#262626] rounded-xl p-5 sm:p-6 mb-4">
+    <h2 class="text-lg font-bold text-neutral-100 mb-3">How It Works</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="text-center"><div class="text-2xl mb-1">📱</div><p class="text-sm font-medium text-neutral-200">1. Join the Queue</p><p class="text-xs text-neutral-500">Enter your name and party size to get in line.</p></div>
+      <div class="text-center"><div class="text-2xl mb-1">⏱️</div><p class="text-sm font-medium text-neutral-200">2. AI Predicts Wait</p><p class="text-xs text-neutral-500">Our AI estimates your wait time based on real-time data.</p></div>
+      <div class="text-center"><div class="text-2xl mb-1">🍽️</div><p class="text-sm font-medium text-neutral-200">3. Get Seated</p><p class="text-xs text-neutral-500">Check your status anytime and get notified when ready.</p></div>
     </div>
   </div>
 
@@ -84,11 +107,7 @@ tailwind.config = {
     <h2 class="text-lg font-bold text-neutral-100 mb-1">Join Queue</h2>
     <p class="text-sm text-neutral-500 mb-4">Add yourself to a restaurant's waiting list.</p>
     <form id="joinForm" class="space-y-3" onsubmit="return handleJoin(event)">
-      <div>
-        <label class="block text-xs font-medium text-neutral-400 mb-1">Restaurant ID</label>
-        <input type="text" id="joinRestaurantId" value="00000000-0000-0000-0000-000000000001" required
-          class="w-full bg-[#0a0a0a] border border-[#262626] rounded-lg px-3 py-2 text-sm text-neutral-200 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/50 transition-colors"/>
-      </div>
+      <input type="hidden" id="joinRestaurantId" value="00000000-0000-0000-0000-000000000001"/>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label class="block text-xs font-medium text-neutral-400 mb-1">Your Name</label>
@@ -134,11 +153,7 @@ tailwind.config = {
     <h2 class="text-lg font-bold text-neutral-100 mb-1">AI Predict Wait Time</h2>
     <p class="text-sm text-neutral-500 mb-4">Get an AI-powered estimate of how long the wait will be.</p>
     <form id="predictForm" class="space-y-3" onsubmit="return handlePredict(event)">
-      <div>
-        <label class="block text-xs font-medium text-neutral-400 mb-1">Restaurant ID</label>
-        <input type="text" id="predictRestaurantId" value="00000000-0000-0000-0000-000000000001" required
-          class="w-full bg-[#0a0a0a] border border-[#262626] rounded-lg px-3 py-2 text-sm text-neutral-200 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/50 transition-colors"/>
-      </div>
+      <input type="hidden" id="predictRestaurantId" value="00000000-0000-0000-0000-000000000001"/>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label class="block text-xs font-medium text-neutral-400 mb-1">Party Size</label>
@@ -177,11 +192,7 @@ tailwind.config = {
     <h2 class="text-lg font-bold text-neutral-100 mb-1">AI Forecast Demand</h2>
     <p class="text-sm text-neutral-500 mb-4">Predict upcoming restaurant demand based on historical data.</p>
     <form id="forecastForm" class="space-y-3" onsubmit="return handleForecast(event)">
-      <div>
-        <label class="block text-xs font-medium text-neutral-400 mb-1">Restaurant ID</label>
-        <input type="text" id="forecastRestaurantId" value="00000000-0000-0000-0000-000000000001" required
-          class="w-full bg-[#0a0a0a] border border-[#262626] rounded-lg px-3 py-2 text-sm text-neutral-200 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/50 transition-colors"/>
-      </div>
+      <input type="hidden" id="forecastRestaurantId" value="00000000-0000-0000-0000-000000000001"/>
       <div>
         <label class="block text-xs font-medium text-neutral-400 mb-1">Past 7 Days Footfall (comma-separated, exactly 7 numbers)</label>
         <input type="text" id="forecastFootfall" value="120,135,98,142,160,155,130" required placeholder="e.g. 120,135,98,142,160,155,130"
@@ -212,6 +223,7 @@ tailwind.config = {
   <p class="text-center text-xs text-neutral-600 mt-8">
     Generated by <a href="https://github.com/Two-Weeks-Team/vibeDeploy" class="text-orange-500 hover:text-orange-400 transition-colors">vibeDeploy</a>
     &bull; Powered by <a href="https://www.digitalocean.com/products/gradient-ai" class="text-orange-500 hover:text-orange-400 transition-colors">DigitalOcean Gradient AI</a>
+    &bull; <a href="/docs" class="text-neutral-500 hover:text-neutral-400 transition-colors">API Docs</a>
   </p>
 </div>
 
@@ -264,7 +276,7 @@ async function handlePredict(e){
   e.preventDefault();
   showLoading('predict');
   try{
-    const body={restaurant_id:document.getElementById('predictRestaurantId').value.trim(),party_size:parseInt(document.getElementById('predictPartySize').value),current_queue_length:parseInt(document.getElementById('predictQueueLen').value),day_of_week:parseInt(document.getElementById('predictDayOfWeek').value),time:document.getElementById('predictTime').value};
+    const body={restaurant_id:document.getElementById('predictRestaurantId').value.trim(),party_size:parseInt(document.getElementById('predictPartySize').value),current_queue_length:parseInt(document.getElementById('predictQueueLen').value),day_of_week:parseInt(document.getElementById('predictDayOfWeek').value),time_of_day:document.getElementById('predictTime').value};
     const data=await apiCall('/api/v1/ai/predict-wait-time',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     showResult('predict',resultCard([['Predicted Wait',data.predicted_wait_minutes!=null?data.predicted_wait_minutes+' min':'N/A'],['Confidence',data.confidence!=null?(data.confidence*100).toFixed(1)+'%':'N/A']]));
   }catch(err){showError('predict','Error: '+err.message)}
